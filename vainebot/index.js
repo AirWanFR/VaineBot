@@ -203,7 +203,7 @@ client.once('clientReady', (c) => {
   setInterval(() => {
     client.user.setPresence({ activities: [activities[activityIndex]], status: 'online' });
     activityIndex = (activityIndex + 1) % activities.length;
-  }, 10000);
+  }, 5000);
 
   updateLiveStatus();
   setInterval(updateLiveStatus, 60000);
