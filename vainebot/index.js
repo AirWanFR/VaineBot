@@ -211,7 +211,7 @@ client.once('clientReady', (c) => {
   // API de synchronisation pour le Panel Admin
   app.get('/api/sync', async (req, res) => {
       const { discord_id, perms, key } = req.query;
-      if (key !== "BddPassword") return res.status(403).send("Accès refusé");
+      if (key !== API_KEY) return res.status(403).send("Accès refusé");
       try {
           const guild = await client.guilds.fetch(process.env.GUILD_ID);
           const member = await guild.members.fetch(discord_id).catch(() => null);
