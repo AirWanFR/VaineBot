@@ -1,0 +1,39 @@
+name: Deploy R1-D1
+
+on:
+  push:
+    branches: [ main ] 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛡️ Connexion au réseau Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci  # Doit correspondre au tag mis dans l'OAuth Client
+          targets: ${{ secrets.SSH_HOST }} # Force l'attente du VPS
+          
+      - name: Connexion SSH et Mise à jour
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/discordbot/vainebot
+            
+            # 1. On récupère le nouveau code
+            git pull origin main
+            
+            # 2. On build la nouvelle image
+            podman build -t vainebot .
+            
+            # 3. On redémarre le service (Systemd s'occupe de tout)
+            systemctl --user restart container-vainebot.service
+            
+            # 4. On nettoie pour ne pas saturer les 10Go de disque
+            podman image prune -f
