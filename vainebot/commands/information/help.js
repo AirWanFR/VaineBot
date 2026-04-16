@@ -8,95 +8,88 @@ const {
 
 module.exports = {
   name: 'help',
-  description: 'Affiche l\'interface de commande de R1-D1',
+  description: 'Affiche l\'interface de commande de R1-D1 par catégories',
 
-  async execute(interactionOrMessage, args, client) {
-    // Liste des commandes d'administration à ne pas afficher dans le menu public
+  async execute(ctx, args, client) {
     const ignoredCommands = ['reload', 'eval', 'secret', 'shutdown'];
+    const authorId = ctx.user?.id || ctx.author?.id;
 
-    // Récupération et formatage des commandes
-    const allCommands = client.commands
-      ?.filter(cmd => !ignoredCommands.includes(cmd.name) && !cmd.hidden)
-      .map(cmd => `**\`r1!${cmd.name}\`**\n└ *${cmd.description || 'Aucune description disponible.'}*`)
-      || [];
+    // --- 1. Organisation des commandes par catégories ---
+    const categories = {};
 
-    const pageSize = 5;
-    const totalPages = Math.max(1, Math.ceil(allCommands.length / pageSize));
+    client.commands.forEach(cmd => {
+      if (ignoredCommands.includes(cmd.name) || cmd.hidden) return;
+
+      // On utilise la propriété 'category' (nom du dossier) définie lors du chargement
+      const categoryName = cmd.category || 'Général';
+      if (!categories[categoryName]) categories[categoryName] = [];
+      
+      categories[categoryName].push(`**\`r1!${cmd.name}\`**\n└ *${cmd.description || 'Pas de description.'}*`);
+    });
+
+    const categoryKeys = Object.keys(categories);
     let currentPage = 0;
 
-    // --- Générateur d'Embed style R1-D1 ---
-    const generateEmbed = (page) => {
-      const start = page * pageSize;
-      const currentCommands = allCommands.slice(start, start + pageSize).join('\n\n');
-      
+    // --- 2. Générateur d'Embed ---
+    const generateEmbed = (pageIndex) => {
+      const categoryName = categoryKeys[pageIndex];
+      const commandsList = categories[categoryName].join('\n\n');
+      const categoryLabel = categoryName.toUpperCase();
+
       return new EmbedBuilder()
-        .setColor('#00fbff') // Cyan néon R1-D1
-        .setTitle('🛰️ Interface de Commande | R1-D1')
+        .setColor('#00fbff')
+        .setTitle(`🛰️ Interface R1-D1 | Module : ${categoryLabel}`)
         .setThumbnail(client.user.displayAvatarURL())
-        .setDescription(`Bonjour Erwan. Voici les modules opérationnels :\n\n${currentCommands || '*Aucun module détecté.*'}`)
+        .setDescription(`Bonjour Erwan. Accès aux protocoles de la section **${categoryLabel}** :\n\n${commandsList}`)
         .addFields({ 
-          name: '📡 Statut Système', 
-          value: `\`En ligne\` | Latence : \`${client.ws.ping}ms\``, 
+          name: '📊 Indexation', 
+          value: `Dossier \`${pageIndex + 1} sur ${categoryKeys.length}\``, 
           inline: true 
         })
         .setFooter({
-          text: `Index : ${page + 1} / ${totalPages} | Unité de service Vainerac`,
+          text: `R1-D1 Unit | Système de fichiers Vainerac`,
           iconURL: client.user.displayAvatarURL()
         })
         .setTimestamp();
     };
 
-    // --- Boutons de Navigation Style Tech ---
-    const generateRow = (page) => {
+    // --- 3. Boutons de Navigation ---
+    const generateRow = (pageIndex) => {
       return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('prev')
-          .setLabel('« Précédent')
+          .setLabel('📁 Dossier Précédent')
           .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page === 0),
+          .setDisabled(pageIndex === 0),
         new ButtonBuilder()
           .setCustomId('next')
-          .setLabel('Suivant »')
+          .setLabel('Dossier Suivant 📁')
           .setStyle(ButtonStyle.Primary)
-          .setDisabled(page === totalPages - 1)
+          .setDisabled(pageIndex === categoryKeys.length - 1)
       );
     };
 
-    // --- Envoi initial ---
+    // --- 4. Envoi et Gestionnaire ---
     const payload = { 
       embeds: [generateEmbed(currentPage)], 
       components: [generateRow(currentPage)],
       fetchReply: true 
     };
 
-    let message;
-    try {
-      if (interactionOrMessage.isCommand?.()) {
-        message = await interactionOrMessage.reply(payload);
-      } else {
-        message = await interactionOrMessage.channel.send(payload);
-      }
-    } catch (err) {
-      return console.error("Erreur lors de l'envoi du menu help :", err);
-    }
+    const message = ctx.isCommand?.() ? await ctx.reply(payload) : await ctx.channel.send(payload);
 
-    // --- Collector de composants (Boutons) ---
     const collector = message.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: 120000 // 2 minutes avant expiration
+      time: 60000 
     });
 
     collector.on('collect', async i => {
-      // Sécurité : Seul celui qui a tapé la commande peut changer de page
-      const authorId = interactionOrMessage.user?.id || interactionOrMessage.author?.id;
       if (i.user.id !== authorId) {
-        return i.reply({ content: "❌ Accès refusé. Cette interface appartient à Erwan.", ephemeral: true });
+        return i.reply({ content: "❌ Accès refusé. Cette interface est verrouillée.", ephemeral: true });
       }
 
       if (i.customId === 'next') currentPage++;
       else if (i.customId === 'prev') currentPage--;
-
-      currentPage = Math.max(0, Math.min(currentPage, totalPages - 1));
 
       await i.update({
         embeds: [generateEmbed(currentPage)],
@@ -104,16 +97,10 @@ module.exports = {
       });
     });
 
-    collector.on('end', async () => {
-      // Désactive les boutons à la fin du temps imparti
+    collector.on('end', () => {
       const disabledRow = generateRow(currentPage);
       disabledRow.components.forEach(btn => btn.setDisabled(true));
-      
-      try {
-        await message.edit({ components: [disabledRow] });
-      } catch (e) {
-        // Le message a pu être supprimé
-      }
+      message.edit({ components: [disabledRow] }).catch(() => null);
     });
   }
 };

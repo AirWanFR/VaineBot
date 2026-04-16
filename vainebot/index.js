@@ -63,22 +63,32 @@ async function syncDiscordRoles(guildMember, userPerms) {
 
 // --- CHARGEMENT DES MODULES (Commandes & Événements) ---
 console.log(chalk.blue('🔍 R1-D1 : Initialisation des modules...'));
+
 const loadCommands = (dir) => {
   const files = fs.readdirSync(dir, { withFileTypes: true });
   for (const file of files) {
     const filePath = path.join(dir, file.name);
+    
     if (file.isDirectory()) {
+      // Si c'est un dossier, on relance la fonction dedans
       loadCommands(filePath);
     } else if (file.name.endsWith('.js')) {
       delete require.cache[require.resolve(filePath)];
       const command = require(filePath);
+      
       if ('name' in command && 'execute' in command) {
+        // --- LOGIQUE DE TRI PAR DOSSIER ---
+        // On récupère le nom du dossier parent (ex: moderation, info, etc.)
+        const parentDirName = path.basename(dir); 
+        command.category = parentDirName; // On injecte la catégorie dans la commande
+        
         client.commands.set(command.name, command);
-        console.log(chalk.green(`✅ Système chargé : ${command.name}`));
+        console.log(chalk.green(`✅ [${parentDirName.toUpperCase()}] Système chargé : ${command.name}`));
       }
     }
   }
 };
+
 loadCommands(path.join(__dirname, 'commands'));
 
 const eventsPath = path.join(__dirname, 'events');
