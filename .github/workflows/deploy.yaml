@@ -24,16 +24,19 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /home/discordbot/vainebot
+            # On utilise le bon chemin détecté sur ton VPS
+            cd /opt/discordbot/vainebot || { echo "Dossier introuvable dans /opt"; exit 1; }
             
             # 1. On récupère le nouveau code
             git pull origin main
             
             # 2. On build la nouvelle image
+            # Le '.' est crucial pour trouver le Dockerfile dans le dossier courant
             podman build -t vainebot .
             
-            # 3. On redémarre le service (Systemd s'occupe de tout)
+            # 3. On redémarre le service
+            systemctl --user daemon-reload
             systemctl --user restart container-vainebot.service
             
-            # 4. On nettoie pour ne pas saturer les 10Go de disque
+            # 4. On nettoie les images inutilisées
             podman image prune -f
