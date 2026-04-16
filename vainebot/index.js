@@ -202,6 +202,7 @@ app.get('/auth/callback', async (req, res) => {
 const activities = [
   { name: "VaineBot, paré au lancement !", type: ActivityType.Custom },
   { name: "VaineBot au rapport !", type: ActivityType.Custom },
+  { name: "Vainerac.fr | Système de sécurité actif", type: ActivityType.Watching },
   { name: "VaineBot | v!help", type: ActivityType.Playing }
 ];
 let activityIndex = 0;
