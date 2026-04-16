@@ -8,99 +8,120 @@ const {
 
 module.exports = {
   name: 'help',
-  description: 'Affiche l\'interface de commande de R1-D1 par catégories',
+  description: 'Accès aux bases de données R1-D1 par sections',
 
   async execute(ctx, args, client) {
     const ignoredCommands = ['reload', 'eval', 'secret', 'shutdown'];
     const authorId = ctx.user?.id || ctx.author?.id;
+    const COMMANDS_PER_PAGE = 5;
 
-    // --- 1. Organisation des commandes par catégories ---
-    const categories = {};
-
+    // --- 1. Organisation des données ---
+    const categoriesMap = {};
     client.commands.forEach(cmd => {
       if (ignoredCommands.includes(cmd.name) || cmd.hidden) return;
-
-      // On utilise la propriété 'category' (nom du dossier) définie lors du chargement
-      const categoryName = cmd.category || 'Général';
-      if (!categories[categoryName]) categories[categoryName] = [];
-      
-      categories[categoryName].push(`**\`r1!${cmd.name}\`**\n└ *${cmd.description || 'Pas de description.'}*`);
+      const cat = cmd.category || 'Général';
+      if (!categoriesMap[cat]) categoriesMap[cat] = [];
+      categoriesMap[cat].push(`**\`v!${cmd.name}\`**\n└ *${cmd.description || 'N/A'}*`);
     });
 
-    const categoryKeys = Object.keys(categories);
-    let currentPage = 0;
+    const categoryKeys = Object.keys(categoriesMap);
+    let currentCatIndex = 0;
+    let currentPageIndex = 0;
 
-    // --- 2. Générateur d'Embed ---
-    const generateEmbed = (pageIndex) => {
-      const categoryName = categoryKeys[pageIndex];
-      const commandsList = categories[categoryName].join('\n\n');
-      const categoryLabel = categoryName.toUpperCase();
+    // --- 2. Fonctions de génération d'interface ---
+    const generateEmbed = (catIdx, pageIdx) => {
+      const categoryName = categoryKeys[catIdx];
+      const allCmds = categoriesMap[categoryName];
+      const totalPages = Math.ceil(allCmds.length / COMMANDS_PER_PAGE);
+      
+      const start = pageIdx * COMMANDS_PER_PAGE;
+      const end = start + COMMANDS_PER_PAGE;
+      const paginatedCmds = allCmds.slice(start, end).join('\n\n');
 
       return new EmbedBuilder()
         .setColor('#00fbff')
-        .setTitle(`🛰️ Interface R1-D1 | Module : ${categoryLabel}`)
+        .setTitle(`🛰️ R1-D1 | DATABASE : ${categoryName.toUpperCase()}`)
         .setThumbnail(client.user.displayAvatarURL())
-        .setDescription(`Bonjour Erwan. Accès aux protocoles de la section **${categoryLabel}** :\n\n${commandsList}`)
-        .addFields({ 
-          name: '📊 Indexation', 
-          value: `Dossier \`${pageIndex + 1} sur ${categoryKeys.length}\``, 
-          inline: true 
-        })
-        .setFooter({
-          text: `R1-D1 Unit | Système de fichiers Vainerac`,
-          iconURL: client.user.displayAvatarURL()
-        })
+        .setDescription(`>>> Bonjour Erwan. Lecture du module **${categoryName}**.\n\n${paginatedCmds}`)
+        .addFields(
+          { name: '📂 Section', value: `\`${catIdx + 1} / ${categoryKeys.length}\``, inline: true },
+          { name: '📄 Page', value: `\`${pageIdx + 1} / ${totalPages}\``, inline: true }
+        )
+        .setFooter({ text: 'Système Vainerac • Unité de service R1-D1', iconURL: client.user.displayAvatarURL() })
         .setTimestamp();
     };
 
-    // --- 3. Boutons de Navigation ---
-    const generateRow = (pageIndex) => {
-      return new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('prev')
-          .setLabel('📁 Dossier Précédent')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(pageIndex === 0),
-        new ButtonBuilder()
-          .setCustomId('next')
-          .setLabel('Dossier Suivant 📁')
-          .setStyle(ButtonStyle.Primary)
-          .setDisabled(pageIndex === categoryKeys.length - 1)
-      );
+    const generateComponents = (catIdx, pageIdx) => {
+      const rows = [];
+      
+      // Ligne 1 : Sélecteur de Sections (Max 5 boutons par ligne)
+      const sectionRow = new ActionRowBuilder();
+      categoryKeys.forEach((cat, index) => {
+        sectionRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`cat_${index}`)
+            .setLabel(cat.charAt(0).toUpperCase() + cat.slice(1))
+            .setStyle(index === catIdx ? ButtonStyle.Primary : ButtonStyle.Secondary)
+        );
+      });
+      rows.push(sectionRow);
+
+      // Ligne 2 : Navigation dans la section (uniquement si besoin)
+      const totalPages = Math.ceil(categoriesMap[categoryKeys[catIdx]].length / COMMANDS_PER_PAGE);
+      if (totalPages > 1) {
+        const navRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('prev_page')
+            .setEmoji('⬅️')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(pageIdx === 0),
+          new ButtonBuilder()
+            .setCustomId('next_page')
+            .setEmoji('➡️')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(pageIdx === totalPages - 1)
+        );
+        rows.push(navRow);
+      }
+
+      return rows;
     };
 
-    // --- 4. Envoi et Gestionnaire ---
+    // --- 3. Envoi Initial ---
     const payload = { 
-      embeds: [generateEmbed(currentPage)], 
-      components: [generateRow(currentPage)],
+      embeds: [generateEmbed(currentCatIndex, currentPageIndex)], 
+      components: generateComponents(currentCatIndex, currentPageIndex),
       fetchReply: true 
     };
 
     const message = ctx.isCommand?.() ? await ctx.reply(payload) : await ctx.channel.send(payload);
 
+    // --- 4. Gestionnaire d'interactions ---
     const collector = message.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: 60000 
+      time: 120000 
     });
 
     collector.on('collect', async i => {
-      if (i.user.id !== authorId) {
-        return i.reply({ content: "❌ Accès refusé. Cette interface est verrouillée.", ephemeral: true });
+      if (i.user.id !== authorId) return i.reply({ content: "⚠️ Accès refusé.", ephemeral: true });
+
+      if (i.customId.startsWith('cat_')) {
+        currentCatIndex = parseInt(i.customId.split('_')[1]);
+        currentPageIndex = 0; // Reset la page quand on change de catégorie
+      } else if (i.customId === 'next_page') {
+        currentPageIndex++;
+      } else if (i.customId === 'prev_page') {
+        currentPageIndex--;
       }
 
-      if (i.customId === 'next') currentPage++;
-      else if (i.customId === 'prev') currentPage--;
-
       await i.update({
-        embeds: [generateEmbed(currentPage)],
-        components: [generateRow(currentPage)]
+        embeds: [generateEmbed(currentCatIndex, currentPageIndex)],
+        components: generateComponents(currentCatIndex, currentPageIndex)
       });
     });
 
     collector.on('end', () => {
-      const disabledRow = generateRow(currentPage);
-      disabledRow.components.forEach(btn => btn.setDisabled(true));
-      message.edit({ components: [disabledRow] }).catch(() => null);
+      message.edit({ components: [] }).catch(() => null);
     });
   }
 };
