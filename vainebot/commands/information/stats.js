@@ -16,7 +16,7 @@ module.exports = {
         { name: 'Création', value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:R>`, inline: true },
       )
       .setThumbnail(guild.iconURL())
-      .setFooter({ text: 'R1-D1 • Stats' })
+      .setFooter({ text: 'VaineBot • Stats' })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });

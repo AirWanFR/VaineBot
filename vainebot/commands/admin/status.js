@@ -10,7 +10,7 @@ module.exports = {
     // Message d'attente pour le côté "analyse en cours"
     const processingEmbed = new EmbedBuilder()
       .setColor('#FFA500')
-      .setDescription('📡 **R1-D1 :** Analyse du serveur web en cours...');
+      .setDescription('📡 **VaineBot :** Analyse du serveur web en cours...');
     
     const msg = ctx.reply 
       ? await ctx.reply({ embeds: [processingEmbed], fetchReply: true }) 
@@ -31,7 +31,7 @@ module.exports = {
           { name: '⚡ Latence Web', value: `\`${responseTime}ms\``, inline: true },
           { name: '📄 Code HTTP', value: `\`${response.status} OK\``, inline: true }
         )
-        .setFooter({ text: 'R1-D1 Monitoring System' })
+        .setFooter({ text: 'VaineBot Monitoring System' })
         .setTimestamp();
 
       if (ctx.editReply) await ctx.editReply({ embeds: [successEmbed] });
@@ -41,11 +41,11 @@ module.exports = {
       const errorEmbed = new EmbedBuilder()
         .setColor('#ff0000')
         .setTitle('⚠️ ALERTE SYSTÈME')
-        .setDescription(`**R1-D1** ne parvient pas à joindre **vainerac.fr**.`)
+        .setDescription(`**VaineBot** ne parvient pas à joindre **vainerac.fr**.`)
         .addFields(
           { name: 'Erreur détectée', value: `\`${error.message}\`` }
         )
-        .setFooter({ text: 'R1-D1 Emergency Protocol' })
+        .setFooter({ text: 'VaineBot Emergency Protocol' })
         .setTimestamp();
 
       if (ctx.editReply) await ctx.editReply({ embeds: [errorEmbed] });

@@ -12,7 +12,7 @@ module.exports = {
   description: 'Accès aux bases de données R1-D1 par sections',
 
   async execute(ctx, args, client) {
-    const ignoredCommands = ['reload', 'eval', 'secret', 'shutdown'];
+    const ignoredCommands = ['reload', 'eval', 'secret', 'shutdown', '.*'];
     const authorId = ctx.user?.id || ctx.author?.id;
     const member = ctx.member;
     const COMMANDS_PER_PAGE = 5;
@@ -70,7 +70,7 @@ module.exports = {
           { name: '📂 Section', value: `\`${catIdx + 1} / ${categoryKeys.length}\``, inline: true },
           { name: '📄 Page', value: `\`${pageIdx + 1} / ${totalPages}\``, inline: true }
         )
-        .setFooter({ text: 'Système Vainerac • Unité de service R1-D1', iconURL: client.user.displayAvatarURL() })
+        .setFooter({ text: 'VaineBot • Page d\'aide', iconURL: client.user.displayAvatarURL() })
         .setTimestamp();
     };
 
