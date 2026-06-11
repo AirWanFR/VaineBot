@@ -15,7 +15,7 @@ const ETS2_PORT = 53697; // Port dédié et sécurisé pour la télémétrie
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
 
 const ets2App = express();
-ets2App.use(express.json());
+ets2App.use(express.json({ limit: '50mb' }));
 
 // --- DONNÉES ETS2 ---
 global.ets2Data = null;
