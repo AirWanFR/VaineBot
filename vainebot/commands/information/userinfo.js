@@ -16,7 +16,7 @@ module.exports = {
     const member = await interaction.guild.members.fetch(user.id);
 
     const infoEmbed = new EmbedBuilder()
-      .setColor('#00fbff') // Cyan néon VaineBot
+      .setColor('#00fbff') // Cyan néon Vainy
       .setTitle(`📡 Rapport d'Analyse : ${user.username}`)
       .setThumbnail(user.displayAvatarURL({ dynamic: true }))
       .addFields(
@@ -27,7 +27,7 @@ module.exports = {
         { name: '🎭 Accès Principal', value: `${member.roles.highest}`, inline: true },
         { name: '🤖 Type d\'Entité', value: user.bot ? 'Intelligence Artificielle' : 'Utilisateur Humain', inline: true }
       )
-      .setFooter({ text: 'VaineBot • Rapport d\'Analyse', iconURL: interaction.client.user.displayAvatarURL() })
+      .setFooter({ text: 'Vainy • Rapport d\'Analyse', iconURL: interaction.client.user.displayAvatarURL() })
       .setTimestamp();
 
     await interaction.reply({

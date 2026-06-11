@@ -46,7 +46,7 @@ Pour que tout le monde s'y retrouve et qu'on avance bien, on s'impose juste quel
 
 Bref, on est là pour kiffer, créer des trucs cool et avancer ensemble. Merci à tous de jouer le jeu ! 🛠️✨
       `)
-      .setFooter({ text: 'VaineBot • Règlement officiel' })
+      .setFooter({ text: 'Vainy • Règlement officiel' })
       .setTimestamp();
 
     await message.channel.send({ embeds: [embed] });

@@ -41,7 +41,7 @@ module.exports = {
       const successEmbed = new EmbedBuilder()
         .setColor('#00fbff')
         .setTitle('🗄️ Sauvegarde Terminée')
-        .setDescription(`Le code source de **VaineBot** a été compressé avec succès.`)
+        .setDescription(`Le code source de **Vainy** a été compressé avec succès.`)
         .addFields({ name: 'Fichier', value: `\`${backupName}\`` })
         .setTimestamp();
 

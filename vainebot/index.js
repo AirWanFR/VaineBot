@@ -11,7 +11,7 @@ const app = express();
 const PORT = 3000;
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
 
-// --- CONFIGURATION R1-D1 ---
+// --- CONFIGURATION VAINY ---
 const PREFIX = 'v!'; 
 const client = new Client({
   intents: [
@@ -50,19 +50,19 @@ async function syncDiscordRoles(guildMember, userPerms) {
         try {
             if (hasPerm && !hasRole) {
                 await guildMember.roles.add(roleId);
-                console.log(chalk.green(`[R1D1] + Rôle : ${roleId} -> ${guildMember.user.tag}`));
+                console.log(chalk.green(`[Vainy] + Rôle : ${roleId} -> ${guildMember.user.tag}`));
             } else if (!hasPerm && hasRole) {
                 await guildMember.roles.remove(roleId);
-                console.log(chalk.yellow(`[R1D1] - Rôle : ${roleId} -> ${guildMember.user.tag}`));
+                console.log(chalk.yellow(`[Vainy] - Rôle : ${roleId} -> ${guildMember.user.tag}`));
             }
         } catch (e) {
-            console.error(chalk.red(`[R1D1] Erreur rôle (${roleId}): ${e.message}`));
+            console.error(chalk.red(`[Vainy] Erreur rôle (${roleId}): ${e.message}`));
         }
     }
 }
 
 // --- CHARGEMENT DES MODULES (Commandes & Événements) ---
-console.log(chalk.blue('🔍 R1-D1 : Initialisation des modules...'));
+console.log(chalk.blue('🔍 Vainy : Initialisation des modules...'));
 
 const loadCommands = (dir) => {
   const files = fs.readdirSync(dir, { withFileTypes: true });
@@ -126,7 +126,7 @@ async function updateLiveStatus() {
             { name: 'Latence Web', value: `\`${siteStatus.latency}\``, inline: true },
             { name: 'Dernier Scan', value: `<t:${Math.floor(Date.now() / 1000)}:T>`, inline: true }
         )
-        .setFooter({ text: 'R1-D1 Auto-Monitoring', iconURL: client.user.displayAvatarURL() });
+        .setFooter({ text: 'Vainy Auto-Monitoring', iconURL: client.user.displayAvatarURL() });
 
     if (!statusMessage) {
         const messages = await channel.messages.fetch({ limit: 10 });
@@ -140,7 +140,7 @@ async function updateLiveStatus() {
 
 // --- ROUTES EXPRESS (Web & API) ---
 app.get('/', (req, res) => {
-    res.send(`<body style="background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;"><div><h1>R1-D1 | Vainerac.fr</h1><p>Système de sécurité et d'authentification actif.</p></div></body>`);
+    res.send(`<body style="background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;"><div><h1>Vainy | Vainerac.fr</h1><p>Système de sécurité et d'authentification actif.</p></div></body>`);
 });
 
 app.get('/auth/link', (req, res) => {
@@ -179,7 +179,7 @@ app.get('/auth/callback', async (req, res) => {
         const user = await client.users.fetch(userData.id);
         const embed = new EmbedBuilder()
             .setTimestamp()
-            .setFooter({ text: 'R1-D1 Security', iconURL: client.user.displayAvatarURL() });
+            .setFooter({ text: 'Vainy Security', iconURL: client.user.displayAvatarURL() });
 
         if (state === 'linking') {
             embed.setColor('#10b981').setTitle('🔗 Liaison réussie').setDescription(`Compte **${userData.username}** lié avec succès.`);
@@ -200,16 +200,16 @@ app.get('/auth/callback', async (req, res) => {
 
 // --- ACTIVITÉS & PRÉSENCE ---
 const activities = [
-  { name: "VaineBot, paré au lancement !", type: ActivityType.Custom },
-  { name: "VaineBot au rapport !", type: ActivityType.Custom },
+  { name: "Vainy, paré au lancement !", type: ActivityType.Custom },
+  { name: "Vainy au rapport !", type: ActivityType.Custom },
   { name: "Vainerac.fr | Système de sécurité actif", type: ActivityType.Watching },
-  { name: "VaineBot | v!help", type: ActivityType.Playing }
+  { name: "Vainy | v!help", type: ActivityType.Playing }
 ];
 let activityIndex = 0;
 
 // --- INITIALISATION READY ---
 client.once('clientReady', (c) => {
-  console.log(chalk.bold.magenta(`\n[R1-D1] Connecté. Bonjour Erwan.\n`));
+  console.log(chalk.bold.magenta(`\n[Vainy] Connecté. Bonjour Erwan.\n`));
 
   setInterval(() => {
     client.user.setPresence({ activities: [activities[activityIndex]], status: 'online' });
@@ -240,7 +240,7 @@ client.once('clientReady', (c) => {
   const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
   const slashCommands = client.commands.map(cmd => ({
       name: cmd.name,
-      description: cmd.description || 'Module R1-D1',
+      description: cmd.description || 'Module Vainy',
       options: cmd.options || []
   }));
 
@@ -260,7 +260,7 @@ client.on('messageCreate', async message => {
 
   if (commandName === 'shutdown' || commandName === 'off') {
     if (message.author.id !== "1282797720934813838") return;
-    await message.reply("🔌 **R1-D1 se déconnecte.** Au revoir, Erwan.");
+    await message.reply("🔌 **Vainy se déconnecte.** Au revoir, Erwan.");
     process.exit();
   }
 

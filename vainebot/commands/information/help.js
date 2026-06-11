@@ -9,7 +9,7 @@ const {
 
 module.exports = {
   name: 'help',
-  description: 'Accès aux bases de données R1-D1 par sections',
+  description: 'Accès aux bases de données Vainy par sections',
 
   async execute(ctx, args, client) {
     const ignoredCommands = ['reload', 'eval', 'secret', 'shutdown', '.*'];
@@ -63,14 +63,14 @@ module.exports = {
 
       return new EmbedBuilder()
         .setColor('#00fbff')
-        .setTitle(`🛰️ R1-D1 | DATABASE : ${categoryName.toUpperCase()}`)
+        .setTitle(`🛰️ Vainy | DATABASE : ${categoryName.toUpperCase()}`)
         .setThumbnail(client.user.displayAvatarURL())
         .setDescription(`>>> Bonjour <@${authorId}>. Accès autorisé au module **${categoryName}**.\n\n${paginatedCmds}`)
         .addFields(
           { name: '📂 Section', value: `\`${catIdx + 1} / ${categoryKeys.length}\``, inline: true },
           { name: '📄 Page', value: `\`${pageIdx + 1} / ${totalPages}\``, inline: true }
         )
-        .setFooter({ text: 'VaineBot • Page d\'aide', iconURL: client.user.displayAvatarURL() })
+        .setFooter({ text: 'Vainy • Page d\'aide', iconURL: client.user.displayAvatarURL() })
         .setTimestamp();
     };
 
