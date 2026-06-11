@@ -8,8 +8,12 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, ActivityType, REST, Routes, Partials, EmbedBuilder } = require('discord.js');
 
 const app = express();
+app.use(express.json()); // Support des corps de requête JSON
 const PORT = 3000;
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
+
+// --- DONNÉES ETS2 ---
+global.ets2Data = null;
 
 // --- CONFIGURATION VAINY ---
 const PREFIX = 'v!'; 
@@ -139,6 +143,18 @@ async function updateLiveStatus() {
 }
 
 // --- ROUTES EXPRESS (Web & API) ---
+app.post('/api/ets2/telemetry', (req, res) => {
+    const { key, data } = req.body;
+    if (key !== API_KEY) return res.status(403).json({ error: "Accès refusé" });
+
+    // Mise à jour des données en mémoire
+    global.ets2Data = {
+        ...data,
+        lastUpdate: Date.now()
+    };
+    res.json({ success: true });
+});
+
 app.get('/', (req, res) => {
     res.send(`<body style="background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;"><div><h1>Vainy | Vainerac.fr</h1><p>Système de sécurité et d'authentification actif.</p></div></body>`);
 });
@@ -212,7 +228,24 @@ client.once('clientReady', (c) => {
   console.log(chalk.bold.magenta(`\n[Vainy] Connecté. Bonjour Erwan.\n`));
 
   setInterval(() => {
-    client.user.setPresence({ activities: [activities[activityIndex]], status: 'online' });
+    let currentActivity = activities[activityIndex];
+
+    // Si on a des données ETS2 récentes (moins de 2 minutes)
+    if (global.ets2Data && (Date.now() - global.ets2Data.lastUpdate) < 120000) {
+        if (global.ets2Data.job && global.ets2Data.job.cargo) {
+            currentActivity = { 
+                name: `ETS2 | ${global.ets2Data.job.sourceCity} ➔ ${global.ets2Data.job.destinationCity}`, 
+                type: ActivityType.Playing 
+            };
+        } else {
+            currentActivity = { 
+                name: `ETS2 | En balade`, 
+                type: ActivityType.Playing 
+            };
+        }
+    }
+
+    client.user.setPresence({ activities: [currentActivity], status: 'online' });
     activityIndex = (activityIndex + 1) % activities.length;
   }, 5000);
 
