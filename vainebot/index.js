@@ -8,9 +8,14 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, ActivityType, REST, Routes, Partials, EmbedBuilder } = require('discord.js');
 
 const app = express();
-app.use(express.json()); // Support des corps de requête JSON
+// Support des corps de requête JSON
+app.use(express.json());
 const PORT = 3000;
+const ETS2_PORT = 53697; // Port dédié et sécurisé pour la télémétrie
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
+
+const ets2App = express();
+ets2App.use(express.json());
 
 // --- DONNÉES ETS2 ---
 global.ets2Data = null;
@@ -143,7 +148,7 @@ async function updateLiveStatus() {
 }
 
 // --- ROUTES EXPRESS (Web & API) ---
-app.post('/api/ets2/telemetry', (req, res) => {
+ets2App.post('/api/ets2/telemetry', (req, res) => {
     const { key, data } = req.body;
     if (key !== API_KEY) return res.status(403).json({ error: "Accès refusé" });
 
@@ -153,6 +158,10 @@ app.post('/api/ets2/telemetry', (req, res) => {
         lastUpdate: Date.now()
     };
     res.json({ success: true });
+});
+
+ets2App.listen(ETS2_PORT, '0.0.0.0', () => {
+    console.log(`🚛 Serveur Télémétrie ETS2 en écoute sur le port ${ETS2_PORT}`);
 });
 
 app.get('/', (req, res) => {
