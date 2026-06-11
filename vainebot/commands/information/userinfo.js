@@ -12,8 +12,20 @@ module.exports = {
     }
   ],
   async execute(interaction) {
-    const user = interaction.options.getUser('utilisateur');
-    const member = await interaction.guild.members.fetch(user.id);
+    const isInteraction = typeof interaction.isCommand === 'function';
+
+    let user;
+    if (isInteraction) {
+      user = interaction.options.getUser('utilisateur');
+    } else {
+      user = interaction.mentions.users.first();
+    }
+
+    if (!user) {
+      return interaction.reply({ content: '❌ Veuillez mentionner un utilisateur (ex: v!userinfo @Pseudo).', ephemeral: true }).catch(() => null);
+    }
+
+    const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
     const infoEmbed = new EmbedBuilder()
       .setColor('#00fbff') // Cyan néon Vainy
@@ -23,15 +35,18 @@ module.exports = {
         { name: '🆔 ID Système', value: `\`${user.id}\``, inline: true },
         { name: '👤 Identité', value: `${user.tag}`, inline: true },
         { name: '📅 Inscription Discord', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:f> (<t:${Math.floor(user.createdTimestamp / 1000)}:R>)`, inline: false },
-        { name: '📥 Arrivée Serveur', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:f> (<t:${Math.floor(member.joinedTimestamp / 1000)}:R>)`, inline: false },
-        { name: '🎭 Accès Principal', value: `${member.roles.highest}`, inline: true },
         { name: '🤖 Type d\'Entité', value: user.bot ? 'Intelligence Artificielle' : 'Utilisateur Humain', inline: true }
-      )
-      .setFooter({ text: 'Vainy • Rapport d\'Analyse', iconURL: interaction.client.user.displayAvatarURL() })
-      .setTimestamp();
+      );
 
-    await interaction.reply({
-      embeds: [infoEmbed]
-    });
+    if (member) {
+      infoEmbed.addFields(
+        { name: '📥 Arrivée Serveur', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:f> (<t:${Math.floor(member.joinedTimestamp / 1000)}:R>)`, inline: false },
+        { name: '🎭 Accès Principal', value: `${member.roles.highest}`, inline: true }
+      );
+    }
+
+    infoEmbed.setFooter({ text: 'Vainy • Rapport d\'Analyse', iconURL: interaction.client.user.displayAvatarURL() }).setTimestamp();
+
+    await interaction.reply({ embeds: [infoEmbed] });
   }
 };

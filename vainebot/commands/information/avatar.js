@@ -12,9 +12,14 @@ module.exports = {
     }
   ],
   async execute(interaction) {
-    if (!interaction.isCommand || !interaction.isCommand()) return;
-
-    const user = interaction.options.getUser('utilisateur') || interaction.user;
+    const isInteraction = typeof interaction.isCommand === 'function';
+    
+    let user;
+    if (isInteraction) {
+      user = interaction.options.getUser('utilisateur') || interaction.user;
+    } else {
+      user = interaction.mentions.users.first() || interaction.author;
+    }
 
     const embed = new EmbedBuilder()
       .setColor('#a855f7')
@@ -22,6 +27,10 @@ module.exports = {
       .setImage(user.displayAvatarURL({ dynamic: true, size: 1024 }))
       .setFooter({ text: 'Vainy Information', iconURL: interaction.client.user.displayAvatarURL() });
 
-    await interaction.reply({ embeds: [embed] });
+    if (isInteraction) {
+      await interaction.reply({ embeds: [embed] });
+    } else {
+      await interaction.reply({ embeds: [embed] });
+    }
   }
 };

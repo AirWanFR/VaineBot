@@ -4,7 +4,7 @@ module.exports = {
   name: 'serverinfo',
   description: 'Affiche les informations relatives au serveur.',
   async execute(interaction) {
-    if (!interaction.isCommand || !interaction.isCommand()) return;
+    // Fonctionne pour Slash (interaction) et Prefix (message)
 
     const guild = interaction.guild;
     const owner = await guild.fetchOwner();

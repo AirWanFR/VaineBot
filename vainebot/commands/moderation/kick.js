@@ -18,14 +18,29 @@ module.exports = {
     }
   ],
   async execute(interaction) {
-    if (!interaction.isCommand || !interaction.isCommand()) return;
+    const isInteraction = typeof interaction.isCommand === 'function';
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
       return interaction.reply({ content: '❌ Accès refusé : Vous n\'avez pas la permission d\'expulser des membres.', ephemeral: true });
     }
 
-    const targetUser = interaction.options.getUser('utilisateur');
-    const reason = interaction.options.getString('raison') || 'Aucune raison fournie.';
+    let targetUser;
+    let reason = 'Aucune raison fournie.';
+
+    if (isInteraction) {
+      targetUser = interaction.options.getUser('utilisateur');
+      reason = interaction.options.getString('raison') || reason;
+    } else {
+      targetUser = interaction.mentions.users.first();
+      // Le reste du message (après v!kick @user) est la raison
+      const argsArray = interaction.content.trim().split(/ +/).slice(2);
+      if (argsArray.length > 0) reason = argsArray.join(' ');
+    }
+
+    if (!targetUser) {
+      return interaction.reply({ content: '❌ Veuillez mentionner un utilisateur à expulser (ex: v!kick @Pseudo raison).', ephemeral: true }).catch(() => null);
+    }
+
     const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
 
     if (!targetMember) {
