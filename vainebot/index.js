@@ -215,7 +215,12 @@ app.get('/auth/callback', async (req, res) => {
         await user.send({ embeds: [embed] }).catch(() => console.log(chalk.yellow("MP bloqués.")));
 
         // Redirection vers ton site PHP pour mettre à jour la BDD
-        res.redirect(`https://vainerac.fr/login.php?discord_auth_success=1&discord_id=${userData.id}&discord_user=${encodeURIComponent(userData.username)}&discord_avatar=${userData.avatar}&state=${state}`);
+        const crypto = require('crypto');
+        const secret = 'VainyBdD7732'; // discord_bot_key défini dans config.inc.php
+        const payload = userData.id + userData.username + userData.avatar + state;
+        const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+        res.redirect(`https://vainerac.fr/login.php?discord_auth_success=1&discord_id=${userData.id}&discord_user=${encodeURIComponent(userData.username)}&discord_avatar=${userData.avatar}&state=${state}&signature=${signature}`);
 
     } catch (e) {
         console.error(chalk.red("Erreur callback : " + e.message));
