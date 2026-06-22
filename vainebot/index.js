@@ -179,7 +179,13 @@ app.get('/auth/login', (req, res) => {
 });
 
 app.get('/auth/callback', async (req, res) => {
-    const { code, state } = req.query;
+    console.log(chalk.yellow("[OAuth2] Callback reçu :"), req.query);
+    const { code, state, error, error_description } = req.query;
+
+    if (error) {
+        console.error(chalk.red(`[OAuth2] Erreur Discord: ${error} - ${error_description}`));
+        return res.redirect('https://vainerac.fr/login.php?error=discord_denied');
+    }
 
     if (!code) return res.redirect('https://vainerac.fr/login.php?error=no_code');
 
