@@ -10,7 +10,7 @@ const { Client, GatewayIntentBits, Collection, ActivityType, REST, Routes, Parti
 const app = express();
 // Support des corps de requête JSON
 app.use(express.json());
-const PORT = 3000;
+const PORT = process.env.PORT_TS || 3000;
 const ETS2_PORT = 53697; // Port dédié et sécurisé pour la télémétrie
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
 
