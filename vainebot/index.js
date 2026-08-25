@@ -179,7 +179,6 @@ app.get('/auth/login', (req, res) => {
 });
 
 app.get('/auth/callback', async (req, res) => {
-    console.log(chalk.yellow("[OAuth2] Callback reçu :"), req.query);
     const { code, state, error, error_description } = req.query;
 
     if (error) {
