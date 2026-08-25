@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { askVainy } = require('../services/aiService');
+const { askVainy } = require('../../services/aiService');
+
 
 
 module.exports = {

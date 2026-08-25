@@ -12,7 +12,7 @@ COPY --chown=node:node package*.json ./
 USER node
 
 # Installation propre
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # On copie tout ton code
 COPY --chown=node:node . .

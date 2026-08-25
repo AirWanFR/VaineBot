@@ -1,0 +1,78 @@
+# ==============================
+# Security & Credentials
+# ==============================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pub
+*token*
+*secret*
+id_rsa
+id_ed25519
+.git-credentials
+config.json
+
+# ==============================
+# Node.js / JavaScript / TypeScript
+# ==============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+dist/
+build/
+.next/
+.turbo/
+.cache/
+
+# ==============================
+# Python (if bot uses Python/AI models)
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# ==============================
+# Database / Local Storage
+# ==============================
+*.sqlite
+*.sqlite3
+*.db
+/data/
+
+# ==============================
+# Logs & Process Managers
+# ==============================
+logs/
+*.log
+pm2/
+.pm2/
+
+# ==============================
+# Archives & Backups
+# ==============================
+*.tar.gz
+*.zip
+*.tar
+*.bak
+
+# ==============================
+# Operating System & Editor Files
+# ==============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
