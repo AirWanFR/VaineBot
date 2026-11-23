@@ -3,6 +3,7 @@ const path = require('path');
 const chalk = require('chalk');
 const axios = require('axios');
 const express = require('express');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const { Client, GatewayIntentBits, Collection, ActivityType, REST, Routes, Partials, EmbedBuilder } = require('discord.js');
@@ -13,6 +14,22 @@ app.use(express.json());
 const PORT = process.env.PORT_TS || 3000;
 const ETS2_PORT = 53697; // Port dédié et sécurisé pour la télémétrie
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
+
+// Secret HMAC partagé avec le site (discord_bot_key dans config.inc.php côté site)
+const SITE_HMAC_SECRET = process.env.SITE_HMAC_SECRET;
+if (!SITE_HMAC_SECRET) {
+    console.error(chalk.red("[Config] SITE_HMAC_SECRET est absente : définis-la dans le .env (même valeur que discord_bot_key côté site). Arrêt."));
+    process.exit(1);
+}
+
+// Comparaison à temps constant de deux chaînes (évite les attaques par mesure de temps)
+function safeEqual(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string' || !a || !b) return false;
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+}
 
 const ets2App = express();
 ets2App.use(express.json({ limit: '50mb' }));
@@ -220,10 +237,8 @@ app.get('/auth/callback', async (req, res) => {
         await user.send({ embeds: [embed] }).catch(() => console.log(chalk.yellow("MP bloqués.")));
 
         // Redirection vers ton site PHP pour mettre à jour la BDD
-        const crypto = require('crypto');
-        const secret = 'VainyBdD7732'; // discord_bot_key défini dans config.inc.php
         const payload = userData.id + userData.username + userData.avatar + state;
-        const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+        const signature = crypto.createHmac('sha256', SITE_HMAC_SECRET).update(payload).digest('hex');
 
         res.redirect(`https://vainerac.fr/login.php?discord_auth_success=1&discord_id=${userData.id}&discord_user=${encodeURIComponent(userData.username)}&discord_avatar=${userData.avatar}&state=${state}&signature=${signature}`);
 
@@ -274,7 +289,7 @@ client.once('clientReady', (c) => {
   // API de synchronisation pour le Panel Admin
   app.get('/api/sync', async (req, res) => {
       const { discord_id, perms, key } = req.query;
-      if (key !== API_KEY) return res.status(403).send("Accès refusé");
+      if (!safeEqual(key, API_KEY)) return res.status(403).send("Accès refusé");
       try {
           const guild = await client.guilds.fetch(process.env.GUILD_ID);
           const member = await guild.members.fetch(discord_id).catch(() => null);
