@@ -82,6 +82,8 @@ Le bot est organisé de manière modulaire pour faciliter sa maintenance et son 
    ```
 3. **Configurer l'environnement :**
    Créer un fichier `.env` à la racine et y inclure les variables nécessaires à l'infrastructure (Tokens Discord, URIs de redirection, Clés d'API, etc.).
+   Variables obligatoires (sans valeur ici) : `BOT_TOKEN`, `CLIENT_ID`, `CLIENT_SECRET`, `GUILD_ID`, `REDIRECT_URI`, `API_KEY`, `SITE_HMAC_SECRET`.
+   `SITE_HMAC_SECRET` sert à signer la redirection OAuth vers `vainerac.fr/login.php` ; elle doit être identique à `discord_bot_key` dans `config.inc.php` côté site. Le bot refuse de démarrer si elle est absente.
 4. **Déployer les commandes :**
    ```bash
    node deploy.js
