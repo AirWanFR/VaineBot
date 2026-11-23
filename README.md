@@ -28,9 +28,6 @@ Ce projet a été conçu pour automatiser les tâches administratives lourdes, s
 
 ## 🚀 Fonctionnalités Principales
 
-*   **🔗 Système d'Authentification OAuth2 :** 
-    * Connexion sécurisée et liaison des comptes Discord au site web Vainerac.
-    * Processus de vérification et d'intégration automatisé pour les membres.
 *   **🚛 Intégration Télémétrie Jeux Vidéo (ETS2) :** 
     * Réception en temps réel des données de télémétrie de simulateurs (comme Euro Truck Simulator 2).
     * Mise à jour dynamique du statut d'activité du bot (ex: affichage de la livraison en cours, statut du trajet, etc.).
@@ -52,7 +49,7 @@ Le projet repose sur une pile technologique robuste et moderne :
 
 *   **Environnement d'exécution :** Node.js
 *   **Interaction Discord :** Discord.js (v14)
-*   **Serveur et API Web :** Express.js (pour la gestion des webhooks et de l'OAuth de manière asynchrone)
+*   **Serveur et API Web :** Express.js (pour l'API de synchronisation et la réception de la télémétrie)
 *   **Requêtes HTTP :** Axios (pour la communication inter-services avec l'infrastructure web)
 *   **Sécurité :** Dotenv (gestion stricte des variables d'environnement pour assurer la confidentialité des jetons)
 
@@ -82,8 +79,7 @@ Le bot est organisé de manière modulaire pour faciliter sa maintenance et son 
    ```
 3. **Configurer l'environnement :**
    Créer un fichier `.env` à la racine et y inclure les variables nécessaires à l'infrastructure (Tokens Discord, URIs de redirection, Clés d'API, etc.).
-   Variables obligatoires (sans valeur ici) : `BOT_TOKEN`, `CLIENT_ID`, `CLIENT_SECRET`, `GUILD_ID`, `REDIRECT_URI`, `API_KEY`, `SITE_HMAC_SECRET`.
-   `SITE_HMAC_SECRET` sert à signer la redirection OAuth vers `vainerac.fr/login.php` ; elle doit être identique à `discord_bot_key` dans `config.inc.php` côté site. Le bot refuse de démarrer si elle est absente.
+   Variables obligatoires (sans valeur ici) : `BOT_TOKEN`, `CLIENT_ID`, `GUILD_ID`, `API_KEY`.
 4. **Déployer les commandes :**
    ```bash
    node deploy.js
@@ -99,7 +95,7 @@ Le bot est organisé de manière modulaire pour faciliter sa maintenance et son 
 ## 🎮 Utilisation
 
 Une fois le bot connecté, il initialise immédiatement ses modules et commence à écouter les événements. 
-Les utilisateurs peuvent interagir avec l'assistant via le menu des applications Discord (`/`) ou via les commandes préfixées. Les flux de données externes (télémétrie, authentification web) sont traités de manière transparente en arrière-plan.
+Les utilisateurs peuvent interagir avec l'assistant via le menu des applications Discord (`/`) ou via les commandes préfixées. Les flux de données externes (télémétrie, synchronisation) sont traités de manière transparente en arrière-plan.
 
 ---
 

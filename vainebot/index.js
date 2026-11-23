@@ -15,13 +15,6 @@ const PORT = process.env.PORT_TS || 3000;
 const ETS2_PORT = 53697; // Port dédié et sécurisé pour la télémétrie
 const API_KEY = process.env.API_KEY; // Clé d'authentification pour l'API de synchronisation
 
-// Secret HMAC partagé avec le site (discord_bot_key dans config.inc.php côté site)
-const SITE_HMAC_SECRET = process.env.SITE_HMAC_SECRET;
-if (!SITE_HMAC_SECRET) {
-    console.error(chalk.red("[Config] SITE_HMAC_SECRET est absente : définis-la dans le .env (même valeur que discord_bot_key côté site). Arrêt."));
-    process.exit(1);
-}
-
 // Comparaison à temps constant de deux chaînes (évite les attaques par mesure de temps)
 function safeEqual(a, b) {
     if (typeof a !== 'string' || typeof b !== 'string' || !a || !b) return false;
@@ -183,69 +176,6 @@ ets2App.listen(ETS2_PORT, '0.0.0.0', () => {
 
 app.get('/', (req, res) => {
     res.send(`<body style="background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;"><div><h1>Vainy | Vainerac.fr</h1><p>Système de sécurité et d'authentification actif.</p></div></body>`);
-});
-
-app.get('/auth/link', (req, res) => {
-    const url = `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=code&scope=identify&state=linking`;
-    res.redirect(url);
-});
-
-app.get('/auth/login', (req, res) => {
-    const url = `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=code&scope=identify&state=login`;
-    res.redirect(url);
-});
-
-app.get('/auth/callback', async (req, res) => {
-    const { code, state, error, error_description } = req.query;
-
-    if (error) {
-        console.error(chalk.red(`[OAuth2] Erreur Discord: ${error} - ${error_description}`));
-        return res.redirect('https://vainerac.fr/login.php?error=discord_denied');
-    }
-
-    if (!code) return res.redirect('https://vainerac.fr/login.php?error=no_code');
-
-    try {
-        // Échange du code contre un token d'accès
-        const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', new URLSearchParams({
-            client_id: process.env.CLIENT_ID,
-            client_secret: process.env.CLIENT_SECRET,
-            code: code,
-            grant_type: 'authorization_code',
-            redirect_uri: process.env.REDIRECT_URI,
-        }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
-
-        // Récupération des infos de l'utilisateur (@me)
-        const userResponse = await axios.get('https://discord.com/api/users/@me', {
-            headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
-        });
-
-        const userData = userResponse.data;
-        
-        // Envoi d'un message de confirmation en MP (optionnel)
-        const user = await client.users.fetch(userData.id);
-        const embed = new EmbedBuilder()
-            .setTimestamp()
-            .setFooter({ text: 'Vainy Security', iconURL: client.user.displayAvatarURL() });
-
-        if (state === 'linking') {
-            embed.setColor('#10b981').setTitle('🔗 Liaison réussie').setDescription(`Compte **${userData.username}** lié avec succès.`);
-        } else {
-            embed.setColor('#8b5cf6').setTitle('🚀 Connexion Vainerac').setDescription(`Ravi de vous revoir, **${userData.username}**.`);
-        }
-
-        await user.send({ embeds: [embed] }).catch(() => console.log(chalk.yellow("MP bloqués.")));
-
-        // Redirection vers ton site PHP pour mettre à jour la BDD
-        const payload = userData.id + userData.username + userData.avatar + state;
-        const signature = crypto.createHmac('sha256', SITE_HMAC_SECRET).update(payload).digest('hex');
-
-        res.redirect(`https://vainerac.fr/login.php?discord_auth_success=1&discord_id=${userData.id}&discord_user=${encodeURIComponent(userData.username)}&discord_avatar=${userData.avatar}&state=${state}&signature=${signature}`);
-
-    } catch (e) {
-        console.error(chalk.red("Erreur callback : " + e.message));
-        res.redirect("https://vainerac.fr/login.php?error=auth_failed");
-    }
 });
 
 // --- ACTIVITÉS & PRÉSENCE ---
