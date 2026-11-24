@@ -2,7 +2,9 @@ FROM node:20-alpine
 
 ENV NODE_ENV=production
 
-# On utilise le répertoire personnel de l'user node (déjà autorisé)
+# Le répertoire de travail doit appartenir à node AVANT le passage en USER node,
+# sinon npm ne peut pas créer node_modules (EACCES).
+RUN mkdir -p /home/node/app && chown node:node /home/node/app
 WORKDIR /home/node/app
 
 # On copie les dépendances
