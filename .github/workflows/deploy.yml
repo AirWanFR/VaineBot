@@ -1,0 +1,71 @@
+name: Deploy vainebot
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+# Un déploiement à la fois par branche. On ne coupe pas un déploiement en cours :
+# le suivant attend son tour.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: localhost/vainebot:latest
+  SSH_USER: bot-vainebot
+  SSH_HOST: vainserv
+  SSH_PORT: "64851"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Image construite sur le runner : rien n'est compilé sur le serveur
+      - name: Build de l'image
+        run: docker build -t "$IMAGE" vainebot
+
+      # Même connexion au tailnet qu'avant (secrets et tag inchangés)
+      - name: Connexion au réseau Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci  # Doit correspondre au tag mis dans l'OAuth Client
+          targets: ${{ env.SSH_HOST }}  # Attend que le serveur soit joignable
+
+      - name: Préparation de la clé SSH et de la clé d'hôte
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SERVER_HOST_KEY: ${{ vars.SERVER_HOST_KEY }}
+        run: |
+          umask 077
+          if [ -z "$DEPLOY_SSH_KEY" ]; then echo "::error::Secret DEPLOY_SSH_KEY absent"; exit 1; fi
+          if [ -z "$SERVER_HOST_KEY" ]; then echo "::error::Variable de dépôt SERVER_HOST_KEY absente"; exit 1; fi
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          printf '%s\n' "$SERVER_HOST_KEY" > "$RUNNER_TEMP/known_hosts"
+
+      # Aucune commande distante : la commande forcée côté serveur
+      # (/usr/local/bin/deploy-bot vainebot) charge l'image et redémarre le service.
+      - name: Envoi de l'image
+        shell: bash
+        run: |
+          docker save "$IMAGE" | gzip | ssh -T -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/deploy_key" \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+            -o ServerAliveInterval=30 \
+            "$SSH_USER@$SSH_HOST"
+
+      - name: Nettoyage de la clé
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/deploy_key" "$RUNNER_TEMP/known_hosts"

@@ -20,4 +20,7 @@ COPY --chown=node:node . .
 # Si ton code a VRAIMENT besoin de croire qu'il est dans /opt/discordbot,
 # on peut créer un lien symbolique, mais c'est rarement nécessaire.
 # Sinon, on lance juste :
+# Express (API et site) écoute sur le port 3000
+EXPOSE 3000
+
 CMD ["node", "index.js"]
